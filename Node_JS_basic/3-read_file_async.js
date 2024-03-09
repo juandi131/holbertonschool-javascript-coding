@@ -1,34 +1,37 @@
 const fs = require('fs');
 
-function countStudents(path) {
-  return new Promise((resolve, reject) => {
-    fs.readFile(path, 'utf8', (err, data) => {
-      if (err) {
-        reject(new Error('Cannot load the database'));
-      } else {
-        const lines = data.split('\n');
-        const fields = lines[0].split(',');
-        const students = lines.slice(1).filter((line) => line.length > 0);
-        const studentCounts = {};
-        for (let i = 0; i < fields.length; i += 1) {
-          studentCounts[fields[i]] = 0;
-        }
-        for (let i = 0; i < students.length; i += 1) {
-          const student = students[i].split(',');
-          for (let j = 0; j < fields.length; j += 1) {
-            if (student[j] === 'yes') {
-              studentCounts[fields[j]] += 1;
-            }
-          }
-        }
-        console.log(`Number of students: ${students.length}`);
-        for (const field in studentCounts) {
-          console.log(`Number of students in ${field}: ${studentCounts[field]}. List: ${students.filter((student) => student.split(', ')[fields.indexOf(field)] === 'yes').map((student) => student.split(', ')[0]).join(', ')}`);
-        }
-        resolve(true);
-      }
-    });
-  });
-}
+const countStudents = async (file) => {
+  let content;
+  try {
+    content = await fs.promises.readFile(file, 'utf8');
+  } catch (error) {
+    throw new Error('Cannot load the database');
+  }
+
+  let lines = content.split('\n').filter((line) => line !== '').slice(1);
+  console.log(`Number of students: ${lines.length}`);
+
+  // Asumiendo que el campo es el tercer elemento basado en tu descripción anterior
+  const fields = lines.map((line) => line.split(',')[2]);
+  const uniqueFields = [...new Set(fields)];
+
+  const studentsByField = {};
+
+  for (let i = 0; i < uniqueFields.length; i += 1) {
+    const field = uniqueFields[i];
+    const studentsInField = lines.filter((line) => line.split(',')[2] === field);
+    const numStudents = studentsInField.length;
+    const names = studentsInField.map((line) => line.split(',')[0]);
+
+    console.log(`Number of students in ${field}: ${numStudents}. List: ${names.join(', ')}`);
+
+    studentsByField[field] = {
+      numStudents,
+      names,
+    };
+  }
+
+  return studentsByField;
+};
 
 module.exports = countStudents;
