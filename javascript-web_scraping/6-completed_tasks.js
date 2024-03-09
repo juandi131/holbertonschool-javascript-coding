@@ -1,20 +1,27 @@
 #!/usr/bin/node
-const request = require('request');
-request(process.argv[2], (error, response, body) => {
-  if (error) {
-    console.error('Error:', error);
-    return;
-  }
 
-  const users = {};
-  for (const task of JSON.parse(body)) {
-    if (task.completed) {
-      if (users[task.userId]) {
-        users[task.userId]++;
-      } else {
-        users[task.userId] = 1;
-      }
+const url = process.argv[2];
+const request = require('request');
+
+request(url, (error, response, body) => {
+  if (error) {
+    console.error(error);
+  }
+  const alls = JSON.parse(body);
+  const results = {};
+  for (const all of alls) {
+    const id = all.userId.toString();
+    if (!results[id]) {
+      results[id] = 0;
+    }
+    if (all.completed) {
+      results[id]++;
     }
   }
-  console.log(users);
+  for (const k in results) {
+    if (!results[k]) {
+      delete results[k];
+    }
+  }
+  console.log(results);
 });
