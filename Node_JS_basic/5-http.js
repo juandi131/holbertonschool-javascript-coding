@@ -1,30 +1,22 @@
 const http = require('http');
 const countStudents = require('./3-read_file_async');
 
-const app = http.createServer((req, res) => {
+const port = 1245;
+const app = http.createServer(async (req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
   if (req.url === '/') {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain');
     res.write('Hello Holberton School!');
-    res.end();
-  } else if (req.url === '/students') {
-    res.statusCode = 200;
-    let consoleOutput = '';
-
-    const originalConsoleLog = console.log;
-    console.log = (message) => {
-      consoleOutput += `${message}\n`;
-    };
-    countStudents(process.argv[2])
-      .then((data) => {
-        res.end(`This is the list of our students\n${consoleOutput.trim()}`);
-      })
-      .catch((error) => {
-        res.statusCode = 400;
-        res.write(`This is the list of our students\nCannot load the database`);
-        res.end();
-      });
   }
-}).listen(1245);
+  if (req.url === '/students') {
+    res.write('This is the list of our students\n');
+    try {
+      const data = await countStudents(process.argv[2]);
+      res.end(`${data.join('\n')}`);
+    } catch (error) {
+      res.end(error.message);
+    }
+  }
+  res.end();
+}).listen(port);
 
 module.exports = app;
