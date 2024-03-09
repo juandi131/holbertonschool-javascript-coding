@@ -1,25 +1,28 @@
-import fs from 'fs';
+const fs = require('fs');
+const csvParser = require('csv-parser');
 
-export default function readDatabase(path) {
-  return new Promise((resolve, reject) => {
-    fs.readFile(path, 'utf-8', (err, data) => {
-      if (err) {
-        reject(Error('Cannot load the database'));
-      }
-      if (data) {
-        const students = data.split('\n');
-        const fields = students[0].split(',');
-        const studentsData = students.slice(1).map((student) => {
-          const studentData = student.split(',');
-          return studentData.reduce((acc, curr, index) => {
-            acc[fields[index]] = curr;
-            return acc;
-          }, {});
-        });
-        resolve(studentsData);
-      }
+function readDatabase(filePath) {
+    return new Promise((resolve, reject) => {
+        const results = {};
+
+        fs.createReadStream(filePath)
+            .pipe(csvParser())
+            .on('data', (row) => {
+                const { firstname, lastname, age, field } = row;
+                if (!results[field]) {
+                    results[field] = [];
+                }
+                results[field].push(firstname);
+            })
+            .on('end', () => {
+                resolve(results);
+            })
+            .on('error', (error) => {
+                reject(`Error reading the CSV file: ${error.message}`);
+            });
     });
-  });
 }
 
-module.exports = readDatabase;
+module.exports = {
+    readDatabase
+};
