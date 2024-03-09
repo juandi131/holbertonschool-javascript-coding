@@ -1,29 +1,59 @@
 const fs = require('fs');
+const readline = require('readline');
 
-function countStudents(path) {
-  if (!fs.existsSync(path)) {
-    throw Error('Cannot load the database');
+const results = [];
+
+const countStudents = (path) => {
+  let stCount = 0;
+  let FIELD = '';
+  let FIELD2 = '';
+  let stByField = 0;
+  let stByField2 = 0;
+  const LIST_OF_FIRSTNAMES = [];
+  const LIST_OF_FIRSTNAMES2 = [];
+
+  try {
+    fs.readFileSync(path, 'utf8');
+  } catch (error) {
+    throw new Error('Cannot load the database');
   }
-  const data = fs.readFileSync(path, 'utf-8');
-  const lines = data.split('\n');
-  const fields = lines[0].split(',');
-  const students = lines.slice(1).filter((line) => line.length > 0);
-  const studentCounts = {};
-  for (let i = 0; i < fields.length; i += 1) {
-    studentCounts[fields[i]] = 0;
-  }
-  for (let i = 0; i < students.length; i += 1) {
-    const student = students[i].split(',');
-    for (let j = 0; j < fields.length; j += 1) {
-      if (student[j] === 'yes') {
-        studentCounts[fields[j]] += 1;
+
+  const readStream = fs.createReadStream(path);
+
+  const readInterface = readline.createInterface({
+    input: readStream,
+  });
+
+  // Event handler for reading lines
+  readInterface.on('line', (line) => {
+    const row = line.split(',');
+    results.push(row);
+  });
+
+  // Event handler for the end of file
+  readInterface.on('close', () => {
+    results.forEach((e, i) => {
+      if (i !== 0) {
+        if (e[i] !== 0) {
+          stCount += 1;
+        }
+        if (!FIELD) [, , , FIELD] = e;
+        if (e[3] === FIELD) {
+          LIST_OF_FIRSTNAMES.push(` ${e[0]}`);
+          stByField += 1;
+        } else {
+          [, , , FIELD2] = e;
+          LIST_OF_FIRSTNAMES2.push(` ${e[0]}`);
+          stByField2 += 1;
+        }
       }
-    }
-  }
-  console.log(`Number of students: ${students.length}`);
-  for (const field in studentCounts) {
-    console.log(`Number of students in ${field}: ${studentCounts[field]}. List: ${students.filter((student) => student.split(', ')[field.indexOf(field)] === 'yes').map((student) => student.split(', ')[0]).join(', ')}`);
-  }
+    });
+
+    process.stdout.write(`Number of students: ${stCount}\n`);
+
+    process.stdout.write(`Number of students in ${FIELD}: ${stByField}. List:${LIST_OF_FIRSTNAMES}\n`);
+    process.stdout.write(`Number of students in ${FIELD2}: ${stByField2}. List:${LIST_OF_FIRSTNAMES2}\n`);
+  });
 };
 
 module.exports = countStudents;
