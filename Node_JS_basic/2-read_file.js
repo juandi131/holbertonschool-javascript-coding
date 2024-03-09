@@ -1,59 +1,43 @@
 const fs = require('fs');
-const readline = require('readline');
+const path = require('path');
 
-const results = [];
-
-const countStudents = (path) => {
-  let stCount = 0;
-  let FIELD = '';
-  let FIELD2 = '';
-  let stByField = 0;
-  let stByField2 = 0;
-  const LIST_OF_FIRSTNAMES = [];
-  const LIST_OF_FIRSTNAMES2 = [];
-
+function countStudents(filePath) {
   try {
-    fs.readFileSync(path, 'utf8');
-  } catch (error) {
-    throw new Error('Cannot load the database');
-  }
+    // Verificar si el archivo existe
+    if (!fs.existsSync(filePath)) {
+      throw new Error('Cannot load the database');
+    }
 
-  const readStream = fs.createReadStream(path);
+    // Leer el archivo de forma sincrónica
+    const data = fs.readFileSync(filePath, { encoding: 'utf8' });
+    const lines = data.split('\n').filter((line) => line !== '');
 
-  const readInterface = readline.createInterface({
-    input: readStream,
-  });
+    // Eliminar la línea de encabezado
+    lines.shift();
 
-  // Event handler for reading lines
-  readInterface.on('line', (line) => {
-    const row = line.split(',');
-    results.push(row);
-  });
-
-  // Event handler for the end of file
-  readInterface.on('close', () => {
-    results.forEach((e, i) => {
-      if (i !== 0) {
-        if (e[i] !== 0) {
-          stCount += 1;
-        }
-        if (!FIELD) [, , , FIELD] = e;
-        if (e[3] === FIELD) {
-          LIST_OF_FIRSTNAMES.push(` ${e[0]}`);
-          stByField += 1;
-        } else {
-          [, , , FIELD2] = e;
-          LIST_OF_FIRSTNAMES2.push(` ${e[0]}`);
-          stByField2 += 1;
-        }
-      }
+    const students = lines.map((line) => {
+      const [firstName, , field] = line.split(',');
+      return { firstName, field };
     });
 
-    process.stdout.write(`Number of students: ${stCount}\n`);
+    const count = students.length;
+    console.log(`Number of students: ${count}`);
 
-    process.stdout.write(`Number of students in ${FIELD}: ${stByField}. List:${LIST_OF_FIRSTNAMES}\n`);
-    process.stdout.write(`Number of students in ${FIELD2}: ${stByField2}. List:${LIST_OF_FIRSTNAMES2}\n`);
-  });
-};
+    // Agrupar estudiantes por campo
+    const fields = {};
+    students.forEach((student) => {
+      if (!fields[student.field]) {
+        fields[student.field] = [];
+      }
+      fields[student.field].push(student.firstName);
+    });
+
+    Object.keys(fields).forEach((field) => {
+      console.log(`Number of students in ${field}: ${fields[field].length}. List: ${fields[field].join(', ')}`);
+    });
+  } catch (error) {
+    throw error;
+  }
+}
 
 module.exports = countStudents;
