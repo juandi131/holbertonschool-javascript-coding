@@ -1,28 +1,35 @@
 const http = require('http');
+
+const args = process.argv.slice(2);
 const countStudents = require('./3-read_file_async');
 
-const db = process.argv[2];
+const DATABASE = args[0];
 
-const app = http.createServer((req, res) => {
+const hostname = '127.0.0.1';
+const port = 1245;
+
+const app = http.createServer(async (req, res) => {
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'text/plain');
+
   const { url } = req;
-  res.writeHead(200, { 'Content-type': 'text/plain' });
+
   if (url === '/') {
     res.write('Hello Holberton School!');
-    res.end();
-  }
-  if (url === '/students') {
+  } else if (url === '/students') {
     res.write('This is the list of our students\n');
-    countStudents(db)
-      .then((result) => {
-        res.write(`${result.sentence1}\n`);
-        res.write(`${result.sentence2}\n`);
-        res.write(`${result.sentence3}`);
-        res.end();
-      })
-      .catch((error) => {
-        res.write(error.message);
-        res.end();
-      });
+    try {
+      const students = await countStudents(DATABASE);
+      res.end(`${students.join('\n')}`);
+    } catch (error) {
+      res.end(error.message);
+    }
   }
-}).listen(1245);
+  res.statusCode = 404;
+  res.end();
+});
+
+app.listen(port, hostname, () => {
+});
+
 module.exports = app;
