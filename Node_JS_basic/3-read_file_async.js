@@ -4,34 +4,42 @@ const countStudents = async (file) => {
   let content;
   try {
     content = await fs.promises.readFile(file, 'utf8');
-  } catch (error) {
+  } catch (_error) {
     throw new Error('Cannot load the database');
   }
 
-  let lines = content.split('\n').filter((line) => line !== '').slice(1);
+  let lines = content.split('\n');
+  lines = lines.filter((line) => line !== '').slice(1);
   console.log(`Number of students: ${lines.length}`);
 
-  // Asumiendo que el campo es el tercer elemento basado en tu descripción anterior
-  const fields = lines.map((line) => line.split(',')[2]);
-  const uniqueFields = [...new Set(fields)];
+  const field = lines.map((line) => line.split(',')[3]);
+  const eachField = [...new Set(field)];
 
-  const studentsByField = {};
+  const dict = {};
 
-  for (let i = 0; i < uniqueFields.length; i += 1) {
-    const field = uniqueFields[i];
-    const studentsInField = lines.filter((line) => line.split(',')[2] === field);
-    const numStudents = studentsInField.length;
-    const names = studentsInField.map((line) => line.split(',')[0]);
+  for (let i = 0; i < eachField.length; i += 1) {
+    const numStudents = field.filter(
+      (fieldName) => fieldName === eachField[i],
+    ).length;
 
-    console.log(`Number of students in ${field}: ${numStudents}. List: ${names.join(', ')}`);
+    const studentsPerField = lines.filter(
+      (line) => line.split(',')[3] === eachField[i],
+    );
 
-    studentsByField[field] = {
+    const names = studentsPerField.map((line) => line.split(',')[0]);
+
+    console.log(
+      `Number of students in ${
+        eachField[i]
+      }: ${numStudents}. List: ${names.join(', ')}`,
+    );
+
+    dict[eachField[i]] = {
       numStudents,
       names,
     };
   }
-
-  return studentsByField;
+  return dict;
 };
 
 module.exports = countStudents;
