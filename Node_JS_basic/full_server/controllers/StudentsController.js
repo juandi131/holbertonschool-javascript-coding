@@ -1,29 +1,60 @@
-const readDatabase = require('../utils');
+import readDatabase from '../utils';
+
+const fs = require('fs');
+
+const db = process.argv[2];
 
 class StudentsController {
-  static getAllStudents(request, response) {
-    response.write('This is the list of our students\n');
-    readDatabase('./database.csv').then((data) => {
-      response.write(`Number of students in CS: ${data['CS'].length}. List: ${data['CS'].join(', ')}\n`);
-      response.write(`Number of students in SWE: ${data['SWE'].length}. List: ${data['SWE'].join(', ')}\n`);
-      response.end();
-      }).catch((err) => res.write(err.message))
-        .finally(() => {
-          res.end();
-      });
-  }
-  static getAllStudentsByMajor(request, response) {
-    const { major } = request.params;
-    if (major !== 'CS' && major !== 'SWE') {
-      response.statusCode = 500;
-      response.write('Major parameter must be CS or SWE\n');
-      response.end();
-      return;
+  static getAllStudents(req, res) {
+    if (fs.existsSync(db)) {
+      const log = [];
+      readDatabase(db)
+        .then((data) => {
+          log.push('This is the list of our students');
+          for (const field in data) {
+            if (field) {
+              log.push(`Number of students in ${field}: ${data[field].length}. List: ${data[field].join(', ')}`);
+            }
+          }
+          res.status(200);
+          res.setHeader('Content-Type', 'text/plain');
+          res.end(log.join('\n'));
+        })
+        .catch((err) => {
+          res.status(500);
+          res.setHeader('Content-Type', 'text/plain');
+          res.end(err.message);
+        });
+    } else {
+      res.status(500);
+      res.setHeader('Content-Type', 'text/plain');
+      res.end('Cannot load the database');
     }
-    readDatabase('./database.csv').then((data) => {
-      response.write(`List: ${data[major].join(', ')}\n`);
-      response.end();
-    }).catch((err) => response.send(err.message));
+  }
+
+  static getAllStudentsByMajor(req, res) {
+    if (req.params.major !== 'CS' && req.params.major !== 'SWE') {
+      res.status(500);
+      res.setHeader('Content-Type', 'text/plain');
+      res.end('Major parameter must be CS or SWE');
+    } else if (fs.existsSync(db)) {
+      readDatabase(db)
+        .then((data) => {
+          const { major } = req.params;
+          res.status(200);
+          res.setHeader('Content-Type', 'text/plain');
+          res.end(`List: ${data[major].sort().join(', ')}`);
+        })
+        .catch((err) => {
+          res.status(500);
+          res.setHeader('Content-Type', 'text/plain');
+          res.end(err.message);
+        });
+    } else {
+      res.status(500);
+      res.setHeader('Content-Type', 'text/plain');
+      res.end('Cannot load the database');
+    }
   }
 }
 
