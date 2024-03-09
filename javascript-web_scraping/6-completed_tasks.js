@@ -1,24 +1,25 @@
 #!/usr/bin/node
 
-const request = require('request');
-const url = process.argv[2];
+const r = require('request');
+r(process.argv[2], (e, res) => {
+  const completed = [];
+  const usrs = {};
+  let x = 0;
 
-request(url, (err, res, body) => {
-  if (err) {
-    console.log(err);
-    return;
-  }
-  const arr = [];
-  const tasks = JSON.parse(body).filter(val => val.completed === true);
-  tasks.forEach(function (task) {
-    if (arr[task.userId - 1] == null) {
-      arr[task.userId - 1] = 0;
+  for (const user of JSON.parse(res.body)) {
+    if (user.completed === true) {
+      completed.push(user.userId);
     }
-    arr[task.userId - 1] += 1;
-  });
-  const obj = {};
-  for (let i = 0; i < arr.length; i++) {
-    obj[i + 1] = arr[i];
   }
-  console.log(obj);
+
+  for (const id of completed) {
+    for (const user of JSON.parse(res.body)) {
+      if (user.completed === true) {
+        if (user.userId === id) { x += 1; }
+      }
+    }
+    usrs[id] = x;
+    x = 0;
+  }
+  console.log(usrs);
 });
