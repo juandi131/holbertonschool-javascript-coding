@@ -2,21 +2,18 @@
 
 const request = require('request');
 const url = process.argv[2];
-request.get(url, function (err, response, body) {
+
+request(url, function (err, _response, body) {
   if (err) {
     console.log(err);
   } else {
-    const todos = JSON.parse(body);
-    const completed = {};
-    for (const x of todos) {
-      if (x.completed === true) {
-        if (x.userId in completed) {
-          completed[x.userId]++;
-        } else {
-          completed[x.userId] = 1;
-        }
+    const users = JSON.parse(body);
+    const completed = users.reduce((acc, user) => {
+      if (user.completed) {
+        acc[user.userId] = (acc[user.userId] || 0) + 1;
       }
-    }
+      return acc;
+    }, {});
     console.log(completed);
   }
 });
