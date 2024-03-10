@@ -10,15 +10,15 @@ app.get('/', (req, res) => {
 app.get('/students', async (req, res) => {
   try {
     let consoleOutput = '';
-    const originalConsoleLog = console.log;
+    const originalConsoleLog = console.log; // Almacena la función original
 
     console.log = (message) => {
-      consoleOutput += `${message}\n`; 
+      consoleOutput += `${message}\n`; // Captura la salida de console.log
     };
 
     await countStudents(process.argv[2]);
 
-    console.log = originalConsoleLog; 
+    console.log = originalConsoleLog; // Restaura la función original de console.log
 
     res.send(`This is the list of our students\n${consoleOutput.trim()}`);
   } catch (error) {
@@ -26,3 +26,5 @@ app.get('/students', async (req, res) => {
   }
 });
 app.listen(1245);
+
+module.exports = app;
