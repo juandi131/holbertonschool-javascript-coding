@@ -1,20 +1,28 @@
-#!/usr/bin/node
-const url = process.argv[2];
-const request = require('request');
-request(url, function (error, response, body) {
-  if (error) {
-    console.error(error);
-  }
-  const bodyObj = JSON.parse(body);
-  const userComplete = {};
-  for (const todo of bodyObj) {
-    if (todo.completed === true) {
-      const key = todo.userId.toString();
-      if (!userComplete[key]) {
-        userComplete[key] = 0;
-      }
-      userComplete[key]++;
-    }
-  }
-  console.log(userComplete);
+const express = require('express');
+const countStudents = require('./3-read_file_async');
+
+const app = express();
+/* eslint-disable */
+app.get('/', (req, res) => {
+  res.send('Hello Holberton School!');
 });
+
+app.get('/students', async (req, res) => {
+  try {
+    let consoleOutput = '';
+    const originalConsoleLog = console.log;
+
+    console.log = (message) => {
+      consoleOutput += `${message}\n`; 
+    };
+
+    await countStudents(process.argv[2]);
+
+    console.log = originalConsoleLog; 
+
+    res.send(`This is the list of our students\n${consoleOutput.trim()}`);
+  } catch (error) {
+    res.send(`This is the list of our students\n${error.message}`);
+  }
+});
+app.listen(1245);
