@@ -1,25 +1,33 @@
 #!/usr/bin/node
 
 const request = require('request');
-const args = process.argv;
 
-request.get(args[2], '', (err, res, body) => {
-  if (err) {
-    console.error(err);
+
+if (process.argv.length !== 3) {
+  console.error('Usage: node 6-completed_tasks.js <API-URL>');
+  process.exit(1);
+}
+
+
+const apiUrl = process.argv[2];
+
+request.get(apiUrl, (error, response, body) => {
+  if (error) {
+    console.error(error);
   } else {
-    const dict = {};
-    const users = JSON.parse(body);
+    const todosData = JSON.parse(body);
+    const completedTasksByUser = {};
 
-    for (const user of users) {
-      if (user.completed) {
-        if (dict[user.userId]) {
-          dict[user.userId] += 1;
+    todosData.forEach(todo => {
+      if (todo.completed) {
+        if (completedTasksByUser[todo.userId]) {
+          completedTasksByUser[todo.userId]++;
         } else {
-          dict[user.userId] = 1;
+          completedTasksByUser[todo.userId] = 1;
         }
       }
-    }
+    });
 
-    console.log(dict);
+    console.log(completedTasksByUser);
   }
 });
